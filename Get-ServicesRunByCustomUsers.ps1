@@ -36,9 +36,9 @@ Function Get-FilteredServiceResults(){
    Try{
       ## Get the data from the computer
       If($creds -ne $null){
-         $Results = gwmi win32_service -computer $Computer -ErrorAction Stop  -Credential $creds | select * | Where { $_.StartName -NotLike "*NetworkService" -And $_.StartName -NotLike "*LocalSystem*" -And $_.StartName -NotLike "*LocalService*" }
+         $Results = gwmi win32_service -computer $Computer -ErrorAction Stop -Credential $creds | select * | Where { $_.StartName -NotLike "*Network*Service" -And $_.StartName -NotLike "*LocalSystem*" -And $_.StartName -NotLike "*Local*Service*" -And $_.StartName -NotLike "NT*Service\*" }
       }Else{
-         $Results = gwmi win32_service -computer $Computer -ErrorAction Stop | select * | Where { $_.StartName -NotLike "*NetworkService" -And $_.StartName -NotLike "*LocalSystem*" -And $_.StartName -NotLike "*LocalService*" }
+         $Results = gwmi win32_service -computer $Computer -ErrorAction Stop | select * | Where { $_.StartName -NotLike "*Network*Service" -And $_.StartName -NotLike "*LocalSystem*" -And $_.StartName -NotLike "*Local*Service*" -And $_.StartName -NotLike "NT*Service\*" }
       }
    }Catch{
       $aCustomItem = New-CustomItem -Computer $Computer -ServiceName "-" -ServiceUser "-" -ErrorMessage $_.Exception.Message
@@ -74,9 +74,12 @@ Function Get-HTMLGrid($aArrayOfData){
 
 $Output = ""
 If($CSVFile -eq ""){
+   $allItems = @()
    $fOutput = Get-FilteredServiceResults
-   $Output = New-CustomItem -Computer $Computer -ServiceName $fOutput.ServiceName -ServiceUser $fOutput.ServiceUser -ErrorMessage $fOutput.ErrorMessage
-   $Output = Get-HTMLGrid $Output
+   $fOutput | % {
+      $allItems += New-CustomItem -Computer $Computer -ServiceName $_.ServiceName -ServiceUser $_.ServiceUser -ErrorMessage $_.ErrorMessage
+   }
+   $Output = Get-HTMLGrid $allItems
 }Else{
    ### Run this is a CSV File is used. 
    $allItems = @()
@@ -84,7 +87,9 @@ If($CSVFile -eq ""){
       $Computer = $_.Servers
       If($_.Username){ $Username = $_.Username; $Password = $_.Password }Else{ $Username = ""; $Password = "" }
       $fOutput = Get-FilteredServiceResults
-      $allItems += New-CustomItem -Computer $Computer -ServiceName $fOutput.ServiceName -ServiceUser $fOutput.ServiceUser -ErrorMessage $fOutput.ErrorMessage
+      $fOutput | % {
+         $allItems += New-CustomItem -Computer $Computer -ServiceName $_.ServiceName -ServiceUser $_.ServiceUser -ErrorMessage $_.ErrorMessage
+      }
    }
    $Output = Get-HTMLGrid $allItems
 }
