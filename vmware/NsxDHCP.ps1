@@ -158,6 +158,9 @@ Function Add-NsxDHCPPool {
             [ValidateNotNullorEmpty()]
             [String]$AllowHugeRange="false",
         [Parameter (Mandatory=$False)]
+            [ValidateNotNullorEmpty()]
+            [String]$Verbose=$false,
+        [Parameter (Mandatory=$False)]
             #PowerNSX Connection object
             [ValidateNotNullOrEmpty()]
             [PSCustomObject]$Connection=$defaultNSXConnection
@@ -189,10 +192,12 @@ Function Add-NsxDHCPPool {
 
         $URI = "/api/4.0/edges/$($EdgeId)/dhcp/config"
         $body = $_DHCPServer.OuterXml
-
-        Write-Output $URI
-        Write-Output $body
-
+        
+        If($Verbose){
+           Write-Host $URI
+           Write-Host $(Format-XML -xml $body)
+        }
+        
         Write-Progress -activity "Update Edge Services Gateway $EdgeId" -status "DHCP Server Config"
         $null = invoke-nsxwebrequest -method "put" -uri $URI -body $body -connection $connection
         write-progress -activity "Update Edge Services Gateway $EdgeId" -completed
