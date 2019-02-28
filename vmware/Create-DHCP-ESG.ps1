@@ -15,6 +15,10 @@ $ippool1dns2 = "8.8.8.8"
 $ippool1leasetime = "60"
 $ippool1Range = "192.168.14.11-192.168.14.15"
 
+### Requirement - source custom cmdlets - fixup and submit to VMware
+. ./NsxDHCP.ps1
+######
+
 ### Do the work ###
 $esg_internalint_spec = New-NsxEdgeInterfaceSpec -Name $esg_in_int_name `
                      -Type Internal `
