@@ -1,6 +1,7 @@
 $esg_name = "Edge01"
 $esg_in_int_name = "edge-in-network1"
 $esg_in_network_name = "network1"
+$esg_in_int_index = 1
 $esg_in_ipaddr = "192.168.14.254"
 $esg_in_subnetmask = "24"
 $esg_cluster = "Cluster1" #DRS must be enabled
@@ -24,7 +25,7 @@ $esg_internalint_spec = New-NsxEdgeInterfaceSpec -Name $esg_in_int_name `
                      -Type Internal `
                      -ConnectedTo (Get-NsxLogicalSwitch $esg_in_network_name) `
                      -PrimaryAddress $esg_in_ipaddr `
-                     -SubnetPrefixLength $esg_in_subnetmask -Index 1
+                     -SubnetPrefixLength $esg_in_subnetmask -Index $esg_in_int_index
 
 write-host -ForegroundColor cyan "Creating Edge Services Gateway:" $esg_name
 
