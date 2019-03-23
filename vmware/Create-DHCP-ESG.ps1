@@ -15,7 +15,7 @@ $ippool1dns1 = "192.168.14.1"
 $ippool1dns2 = "8.8.8.8"
 $ippool1leasetime = "60"
 $ippool1Range = "192.168.14.11-192.168.14.15"
-#Convert domain list to hex: .\Convert-DomainListToHex.ps1 "domain.local;domain2.local" 
+#Convert domain list to hex for option 119: .\Convert-DomainListToHex.ps1 "domain.local;domain2.local" 
 #Convert string value to hex for option 15: https://codebeautify.org/string-hex-converter
 $otherDHCPOptions = @{119 = "06646F6D61696E056C6F63616C0007646F6D61696E32056C6F63616C00"; 15 = "646f6d61696e2e6c6f63616c" }
 
