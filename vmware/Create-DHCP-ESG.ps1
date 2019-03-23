@@ -15,6 +15,9 @@ $ippool1dns1 = "192.168.14.1"
 $ippool1dns2 = "8.8.8.8"
 $ippool1leasetime = "60"
 $ippool1Range = "192.168.14.11-192.168.14.15"
+#Convert domain list to hex: .\Convert-DomainListToHex.ps1 "domain.local;domain2.local" 
+#Convert string value to hex for option 15: https://codebeautify.org/string-hex-converter
+$otherDHCPOptions = @{119 = "06646F6D61696E056C6F63616C0007646F6D61696E32056C6F63616C00"; 15 = "646f6d61696e2e6c6f63616c" }
 
 ### Requirement - source custom cmdlets - fixup and submit to VMware
 . ./NsxDHCP.ps1
@@ -34,7 +37,7 @@ $dhcp_esg = New-NsxEdge -Name $esg_name -Datastore (get-datastore $esg_datastore
             -Password $esg_password -FormFactor compact -AutoGenerateRules `
             -FwEnabled -FwDefaultPolicyAllow -EnableSSH -Interface $esg_internalint_spec
 
-$DHCPPoolResults = Get-NsxEdge $esg_name | Get-NsxDHCPServer | Add-NsxDHCPPool -DefaultGateway $ippool1gw -DomainName $ippool1suffix -PrimaryNameServer $ippool1dns1 -SecondaryNameServer $ippool1dns2 -LeaseTime $ippool1leasetime -SubnetMask $ippool1subnetmask -IpRange $ippool1Range
+$DHCPPoolResults = Get-NsxEdge $esg_name | Get-NsxDHCPServer | Add-NsxDHCPPool -DefaultGateway $ippool1gw -DomainName $ippool1suffix -PrimaryNameServer $ippool1dns1 -SecondaryNameServer $ippool1dns2 -LeaseTime $ippool1leasetime -SubnetMask $ippool1subnetmask -IpRange $ippool1Range -OtherDHCPOptions $otherDHCPOptions -DebugMe true
 
 $dhcp_esg = Get-NsxEdge $esg_name
 $dhcp_esg.features.dhcp.enabled = "true"
