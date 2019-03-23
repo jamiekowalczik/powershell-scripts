@@ -1,3 +1,6 @@
+# invoke-nsxwebrequest -method "get" -uri "/api/4.0/edges/edge-7/dhcp/config" -connection $connection | % { $_.Content } | Format-XML
+# invoke-nsxwebrequest -method "put" -uri "/api/4.0/edges/edge-7/dhcp/config" -body ([xml](get-content .\newpool.xml) | format-xml) -connection $connection | % { $_.Content } | Format-XML
+
 $esg_name = "Edge01"
 $esg_in_int_name = "edge-in-network1"
 $esg_in_network_name = "network1"
