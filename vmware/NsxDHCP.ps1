@@ -99,7 +99,7 @@ Function Get-NsxDHCPServer {
     }
 }
 
-# $DHCPPoolResults = Get-NsxEdge Edge01 | Get-NsxDHCPServer | Add-NsxDHCPPool -AutoConfigureDNS "false" -DefaultGateway "192.168.14.1" -DomainName "kowalczik.hopto.org" -PrimaryNameServer "192.168.2.1" -SecondaryNameServer "8.8.8.8" -LeaseTime "60" -SubnetMask "255.255.255.0" -IpRange "192.168.14.5-192.168.14.7" -AllowHugeRange "false"
+# $DHCPPoolResults = Get-NsxEdge DHCP-esg | Get-NsxDHCPServer | Add-NsxDHCPPool -AutoConfigureDNS "false" -DefaultGateway "192.168.14.1" -DomainName "kowalczik.hopto.org" -PrimaryNameServer "192.168.2.1" -SecondaryNameServer "8.8.8.8" -LeaseTime "60" -SubnetMask "255.255.255.0" -IpRange "192.168.14.5-192.168.14.7" -AllowHugeRange "false"
 Function Add-NsxDHCPPool {
 
     <#
@@ -134,17 +134,14 @@ Function Add-NsxDHCPPool {
             [ValidateNotNullorEmpty()]
             [String]$AutoConfigureDNS="false",
         [Parameter (Mandatory=$False)]
-            [ValidateNotNullOrEmpty()]
-            [IpAddress]$DefaultGateway="",
+            [IpAddress]$DefaultGateway,
         [Parameter (Mandatory=$False)]
-            [ValidateNotNullOrEmpty()]
+            [ValidateNotNull()]
             [String]$DomainName="",
         [Parameter (Mandatory=$False)]
-            [ValidateNotNullOrEmpty()]
-            [IpAddress]$PrimaryNameServer="",
+            [IpAddress]$PrimaryNameServer,
         [Parameter (Mandatory=$False)]
-            [ValidateNotNullOrEmpty()]
-            [IpAddress]$SecondaryNameServer="",
+            [IpAddress]$SecondaryNameServer,
         [Parameter (Mandatory=$False)]
             [ValidateNotNullOrEmpty()]
             [Int]$LeaseTime=86400,
@@ -157,9 +154,12 @@ Function Add-NsxDHCPPool {
         [Parameter (Mandatory=$False)]
             [ValidateNotNullorEmpty()]
             [String]$AllowHugeRange="false",
+	[Parameter (Mandatory=$False)]
+            [ValidateNotNull()]
+            [HashTable]$OtherDHCPOptions=@{},
         [Parameter (Mandatory=$False)]
             [ValidateNotNullorEmpty()]
-            [String]$Verbose=$false,
+            [String]$DebugMe="false",
         [Parameter (Mandatory=$False)]
             #PowerNSX Connection object
             [ValidateNotNullOrEmpty()]
@@ -181,23 +181,45 @@ Function Add-NsxDHCPPool {
         $IPPools.appendChild($xmlDHCPPool) | out-null
 
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "autoConfigureDNS" -xmlElementText $AutoConfigureDNS
-        Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "defaultGateway" -xmlElementText $DefaultGateway
+        If($DefaultGateway -ne $null){ Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "defaultGateway" -xmlElementText $DefaultGateway }
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "domainName" -xmlElementText $DomainName
-        Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "primaryNameServer" -xmlElementText $PrimaryNameServer
-        Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "secondaryNameServer" -xmlElementText $SecondaryNameServer
+        If($PrimaryNameServer -ne $null){ Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "primaryNameServer" -xmlElementText $PrimaryNameServer }
+        If($SecondaryNameServer -ne $null){ Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "secondaryNameServer" -xmlElementText $SecondaryNameServer }
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "leaseTime" -xmlElementText $LeaseTime
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "subnetMask" -xmlElementText $SubnetMask
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "ipRange" -xmlElementText $IpRange
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "allowHugeRange" -xmlElementText $AllowHugeRange
+		
+	    If($OtherDHCPOptions.Count -gt 0){ 
+	        #<dhcpOptions>
+            #  <others>
+            #     <code>119</code>
+            #     <value>06646F6D61696E056C6F63616C0007646F6D61696E32056C6F63616C00</value>
+            #  </others>
+            #  <others>
+            #     <code>15</code>
+            #     <value>646f6d61696e2e6c6f63616c</value>
+            #  </others>
+            #</dhcpOptions>
+            [System.XML.XMLElement]$xmlDHCPPooldhcpOptions = $xmlDHCPPool.OwnerDocument.CreateElement("dhcpOptions")
+            $xmlDHCPPool.appendChild($xmlDHCPPooldhcpOptions) | out-null
+         
+	        ForEach($OtherDHCPOption in $OtherDHCPOptions.keys){
+                [System.XML.XMLElement]$xmlDHCPPoolOptionsOthers = $xmlDHCPPooldhcpOptions.OwnerDocument.CreateElement("others")
+                $xmlDHCPPooldhcpOptions.appendChild($xmlDHCPPoolOptionsOthers) | out-null
+		        Add-XmlElement -xmlRoot $xmlDHCPPoolOptionsOthers -xmlElementName "code" -xmlElementText $OtherDHCPOption
+		        Add-XmlElement -xmlRoot $xmlDHCPPoolOptionsOthers -xmlElementName "value" -xmlElementText $OtherDHCPOptions.$OtherDHCPOption 
+	        }
+        }
 
         $URI = "/api/4.0/edges/$($EdgeId)/dhcp/config"
         $body = $_DHCPServer.OuterXml
-        
-        If($Verbose){
+
+        If($DebugMe.ToLower() -eq "true"){
            Write-Host $URI
            Write-Host $(Format-XML -xml $body)
         }
-        
+
         Write-Progress -activity "Update Edge Services Gateway $EdgeId" -status "DHCP Server Config"
         $null = invoke-nsxwebrequest -method "put" -uri $URI -body $body -connection $connection
         write-progress -activity "Update Edge Services Gateway $EdgeId" -completed
