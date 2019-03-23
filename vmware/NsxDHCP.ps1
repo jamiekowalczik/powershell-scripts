@@ -159,6 +159,9 @@ Function Add-NsxDHCPPool {
             [HashTable]$OtherDHCPOptions=@{},
         [Parameter (Mandatory=$False)]
             [ValidateNotNullorEmpty()]
+            [String]$XMLOnly="false",
+        [Parameter (Mandatory=$False)]
+            [ValidateNotNullorEmpty()]
             [String]$DebugMe="false",
         [Parameter (Mandatory=$False)]
             #PowerNSX Connection object
@@ -194,11 +197,11 @@ Function Add-NsxDHCPPool {
 	    #<dhcpOptions>
             #  <others>
             #     <code>119</code>
-            #     <value>06646F6D61696E056C6F63616C0007646F6D61696E32056C6F63616C00</value>
+            #     <value>076f75746c6f6f6b096f666669636533363503636f6d00</value>
             #  </others>
             #  <others>
             #     <code>15</code>
-            #     <value>646f6d61696e2e6c6f63616c</value>
+            #     <value>6b6f77616c637a696b2e686f70746f2e6f7267</value>
             #  </others>
             #</dhcpOptions>
             [System.XML.XMLElement]$xmlDHCPPooldhcpOptions = $xmlDHCPPool.OwnerDocument.CreateElement("dhcpOptions")
@@ -215,17 +218,19 @@ Function Add-NsxDHCPPool {
         $URI = "/api/4.0/edges/$($EdgeId)/dhcp/config"
         $body = $_DHCPServer.OuterXml
 
-        If($DebugMe.ToLower() -eq "true"){
+        If($DebugMe.ToLower() -eq "true" -Or $XMLOnly.ToLower() -eq "true"){
            Write-Host $URI
            Write-Host $(Format-XML -xml $body)
         }
 
-        Write-Progress -activity "Update Edge Services Gateway $EdgeId" -status "DHCP Server Config"
-        $null = invoke-nsxwebrequest -method "put" -uri $URI -body $body -connection $connection
-        write-progress -activity "Update Edge Services Gateway $EdgeId" -completed
-
-        $UpdatedDHCPServer = Get-NsxEdge -objectId $EdgeId -connection $connection | Get-NsxDHCPServer
-        $UpdatedDHCPServer
+	If($XMLOnly.ToLower() -eq "false"){
+            Write-Progress -activity "Update Edge Services Gateway $EdgeId" -status "DHCP Server Config"
+            $null = invoke-nsxwebrequest -method "put" -uri $URI -body $body -connection $connection
+            write-progress -activity "Update Edge Services Gateway $EdgeId" -completed
+         
+            $UpdatedDHCPServer = Get-NsxEdge -objectId $EdgeId -connection $connection | Get-NsxDHCPServer
+            $UpdatedDHCPServer
+        }
     }
 
     end {}
