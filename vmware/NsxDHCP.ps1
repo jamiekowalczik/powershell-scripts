@@ -190,8 +190,8 @@ Function Add-NsxDHCPPool {
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "ipRange" -xmlElementText $IpRange
         Add-XmlElement -xmlRoot $xmlDHCPPool -xmlElementName "allowHugeRange" -xmlElementText $AllowHugeRange
 		
-	    If($OtherDHCPOptions.Count -gt 0){ 
-	        #<dhcpOptions>
+	If($OtherDHCPOptions.Count -gt 0){ 
+	    #<dhcpOptions>
             #  <others>
             #     <code>119</code>
             #     <value>06646F6D61696E056C6F63616C0007646F6D61696E32056C6F63616C00</value>
@@ -204,12 +204,12 @@ Function Add-NsxDHCPPool {
             [System.XML.XMLElement]$xmlDHCPPooldhcpOptions = $xmlDHCPPool.OwnerDocument.CreateElement("dhcpOptions")
             $xmlDHCPPool.appendChild($xmlDHCPPooldhcpOptions) | out-null
          
-	        ForEach($OtherDHCPOption in $OtherDHCPOptions.keys){
+	    ForEach($OtherDHCPOption in $OtherDHCPOptions.keys){
                 [System.XML.XMLElement]$xmlDHCPPoolOptionsOthers = $xmlDHCPPooldhcpOptions.OwnerDocument.CreateElement("others")
                 $xmlDHCPPooldhcpOptions.appendChild($xmlDHCPPoolOptionsOthers) | out-null
-		        Add-XmlElement -xmlRoot $xmlDHCPPoolOptionsOthers -xmlElementName "code" -xmlElementText $OtherDHCPOption
-		        Add-XmlElement -xmlRoot $xmlDHCPPoolOptionsOthers -xmlElementName "value" -xmlElementText $OtherDHCPOptions.$OtherDHCPOption 
-	        }
+		Add-XmlElement -xmlRoot $xmlDHCPPoolOptionsOthers -xmlElementName "code" -xmlElementText $OtherDHCPOption
+		Add-XmlElement -xmlRoot $xmlDHCPPoolOptionsOthers -xmlElementName "value" -xmlElementText $OtherDHCPOptions.$OtherDHCPOption 
+	    }
         }
 
         $URI = "/api/4.0/edges/$($EdgeId)/dhcp/config"
